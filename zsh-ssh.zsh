@@ -207,11 +207,16 @@ fzf_complete_ssh() {
   tokens=(${(z)LBUFFER})
   cmd=${tokens[1]}
 
-  if [[ "$LBUFFER" =~ "^ *ssh$" ]]; then
-    zle ${fzf_ssh_default_completion:-expand-or-complete}
-  elif [[ "$cmd" == "ssh" ]]; then
-    result=$(_ssh_host_list ${tokens[2, -1]})
-    fuzzy_input="${LBUFFER#"$tokens[1] "}"
+  if [[ "$cmd" == "ssh" ]]; then
+    if [[ "$LBUFFER" =~ "^ *ssh$" ]]; then
+      # When input is just "ssh", get all hosts
+      result=$(_ssh_host_list)
+      fuzzy_input=""
+    else
+      # When input is "ssh <partial>", get filtered hosts
+      result=$(_ssh_host_list ${tokens[2, -1]})
+      fuzzy_input="${LBUFFER#"$tokens[1] "}"
+    fi
 
     if [ -z "$result" ]; then
       # When host parameters exist, don't fall back to default completion to avoid slow hosts enumeration
